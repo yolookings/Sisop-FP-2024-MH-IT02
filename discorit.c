@@ -34,22 +34,47 @@ void register_user(int sockfd, const char* username, const char* password) {
     }
 }
 
-void login_user(int sockfd, const char* username, const char* password) {
-    char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "LOGIN %s %s", username, password);
 
-    send(sockfd, buffer, strlen(buffer), 0);
-    recv(sockfd, buffer, sizeof(buffer), 0);
+void login_user(int sockfd,const char* username, const char* password) {
+    char line[256];
+    char stored_username[50];
+    char stored_password[BCRYPT_HASHSIZE];
+    char role[10];
 
-    printf("%s\n", buffer);
+    FILE *file = fopen("user.csv", "r");
+    if (file == NULL) {
+        perror("File users.csv tidak dapat dibuka");
+        exit(EXIT_FAILURE);
+    }
+
+    while (fgets(line, sizeof(line), file)) {
+        sscanf(line, "%[^,],%[^,],%s", stored_username, stored_password, role);
+
+        if (strcmp(stored_username, username) == 0) {
+            if (bcrypt_checkpw(password, stored_password) == 0) {
+                printf("%s berhasil login\n", username);
+                printf("[%s]\n", username); // Cetak role setelah login berhasil
+                fclose(file);
+                return;
+            }
+            else {
+                fclose(file);
+                printf("Login gagal\n");
+                return;
+            }
+        }
+    }
+    
+    fclose(file);
+    printf("Login gagal\n"); // Cetak jika username tidak ditemukan
 }
 
 void join_channel(int sockfd, const char* username, const char* channel, const char* key) {
     char buffer[BUFFER_SIZE];
     if (key != NULL) {
-        snprintf(buffer, sizeof(buffer), "[%s] JOIN %s Key: %s", username, channel, key);
+        snprintf(buffer, sizeof(buffer), "JOIN %s %s %s", username, channel, key);
     } else {
-        snprintf(buffer, sizeof(buffer), "[%s] JOIN %s", username, channel);
+        snprintf(buffer, sizeof(buffer), "JOIN %s %s", username, channel);
     }
 
     send(sockfd, buffer, strlen(buffer), 0);
@@ -60,7 +85,7 @@ void join_channel(int sockfd, const char* username, const char* channel, const c
 
 void list_channels(int sockfd, const char* username) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s] LIST CHANNEL", username);
+    snprintf(buffer, sizeof(buffer), "LIST CHANNEL %s", username);
 
     send(sockfd, buffer, strlen(buffer), 0);
     recv(sockfd, buffer, sizeof(buffer), 0);
@@ -70,7 +95,7 @@ void list_channels(int sockfd, const char* username) {
 
 void list_rooms(int sockfd, const char* username, const char* channel) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s/%s] LIST ROOM", username, channel);
+    snprintf(buffer, sizeof(buffer), "LIST ROOM %s %s", username, channel);
 
     send(sockfd, buffer, strlen(buffer), 0);
     recv(sockfd, buffer, sizeof(buffer), 0);
@@ -80,7 +105,7 @@ void list_rooms(int sockfd, const char* username, const char* channel) {
 
 void list_users(int sockfd, const char* username, const char* channel) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s/%s] LIST USER", username, channel);
+    snprintf(buffer, sizeof(buffer), "LIST USER %s %s", username, channel);
 
     send(sockfd, buffer, strlen(buffer), 0);
     recv(sockfd, buffer, sizeof(buffer), 0);
@@ -90,37 +115,7 @@ void list_users(int sockfd, const char* username, const char* channel) {
 
 void chat(int sockfd, const char* username, const char* channel, const char* message) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s/%s] CHAT \"%s\"", username, channel, message);
-
-    send(sockfd, buffer, strlen(buffer), 0);
-    recv(sockfd, buffer, sizeof(buffer), 0);
-
-    printf("%s\n", buffer);
-}
-
-void see_chat(int sockfd, const char* username, const char* channel) {
-    char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s/%s] SEE CHAT", username, channel);
-
-    send(sockfd, buffer, strlen(buffer), 0);
-    recv(sockfd, buffer, sizeof(buffer), 0);
-
-    printf("%s\n", buffer);
-}
-
-void edit_chat(int sockfd, const char* username, const char* channel, int id, const char* new_message) {
-    char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s/%s] EDIT CHAT %d \"%s\"", username, channel, id, new_message);
-
-    send(sockfd, buffer, strlen(buffer), 0);
-    recv(sockfd, buffer, sizeof(buffer), 0);
-
-    printf("%s\n", buffer);
-}
-
-void delete_chat(int sockfd, const char* username, const char* channel, int id) {
-    char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof(buffer), "[%s/%s] DEL CHAT %d", username, channel, id);
+    snprintf(buffer, sizeof(buffer), "CHAT %s %s %s", username, channel, message);
 
     send(sockfd, buffer, strlen(buffer), 0);
     recv(sockfd, buffer, sizeof(buffer), 0);
@@ -211,37 +206,27 @@ int main(int argc, char *argv[]) {
     }
 
     if (strcmp(command, "REGISTER") == 0) {
+        const char* password = argv[6];
         register_user(sockfd, username, password);
     } else if (strcmp(command, "LOGIN") == 0) {
+        const char* password = argv[6];
         login_user(sockfd, username, password);
+    } else if (strcmp(command, "JOIN") == 0) {
+        const char* channel = argv[5];
+        const char* key = argc > 6 ? argv[6] : NULL;
+        join_channel(sockfd, username, channel, key);
     } else if (strcmp(command, "LIST CHANNEL") == 0) {
         list_channels(sockfd, username);
-    } else if (strcmp(command, "JOIN") == 0) {
-        const char* channel = argv[optind++];
-        const char* key = (optind < argc && strcmp(argv[optind], "Key:") == 0) ? argv[optind + 1] : NULL;
-        join_channel(sockfd, username, channel, key);
     } else if (strcmp(command, "LIST ROOM") == 0) {
-        const char* channel = argv[optind++];
+        const char* channel = argv[5];
         list_rooms(sockfd, username, channel);
     } else if (strcmp(command, "LIST USER") == 0) {
-        const char* channel = argv[optind++];
+        const char* channel = argv[5];
         list_users(sockfd, username, channel);
     } else if (strcmp(command, "CHAT") == 0) {
-        const char* channel = argv[optind++];
-        const char* message = argv[optind++];
+        const char* channel = argv[5];
+        const char* message = argv[6];
         chat(sockfd, username, channel, message);
-    } else if (strcmp(command, "SEE CHAT") == 0) {
-        const char* channel = argv[optind++];
-        see_chat(sockfd, username, channel);
-    } else if (strcmp(command, "EDIT CHAT") == 0) {
-        const char* channel = argv[optind++];
-        int id = atoi(argv[optind++]);
-        const char* new_message = argv[optind++];
-        edit_chat(sockfd, username, channel, id, new_message);
-    } else if (strcmp(command, "DEL CHAT") == 0) {
-        const char* channel = argv[optind++];
-        int id = atoi(argv[optind++]);
-        delete_chat(sockfd, username, channel, id);
     } else if (strcmp(command, "EDIT PROFILE SELF") == 0) {
         const char* new_username = argv[5];
         const char* new_password = argv[6];
@@ -250,7 +235,7 @@ int main(int argc, char *argv[]) {
         printf("Invalid command\n");
     }
 
-    // Close socket
+    //close socket
     close(sockfd);
     return 0;
 }
