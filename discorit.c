@@ -10,18 +10,30 @@
 void register_user(int sockfd, const char* username, const char* password) {
     char salt[BCRYPT_HASHSIZE];
     char hashed[BCRYPT_HASHSIZE];
-
+    // Generate salt and hash the password
     bcrypt_gensalt(12, salt);
     bcrypt_hashpw(password, salt, hashed);
 
+    // Construct message to send to server
     char buffer[BUFFER_SIZE];
     snprintf(buffer, sizeof(buffer), "REGISTER %s %s", username, hashed);
 
+    // Send message to server
     send(sockfd, buffer, strlen(buffer), 0);
+    
+    // Receive response from server
     recv(sockfd, buffer, sizeof(buffer), 0);
 
-    printf("%s\n", buffer);
+    // Check server response
+    if (strncmp(buffer, "REGISTER_SUCCESS", 16) == 0) {
+        printf("%s berhasil register\n", username);
+    } else if (strncmp(buffer, "REGISTER_FAILURE", 16) == 0) {
+        printf("%s sudah terdaftar\n", username);
+    } else {
+        printf("Server returned unexpected response: %s\n", buffer);
+    }
 }
+
 
 void login_user(int sockfd, const char* username, const char* password) {
     char buffer[BUFFER_SIZE];
@@ -98,32 +110,75 @@ void edit_profile_self(int sockfd, const char* username, const char* new_usernam
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 5) {
-        printf("Usage: ./discorit <SERVER_IP> <SERVER_PORT> <COMMAND> <username> [OPTIONS]\n");
-        return 1;
+    const char* server_ip = "127.0.0.1"; // Nilai default IP server
+    int server_port = 8080; // Nilai default port server
+    const char* command = NULL;
+    const char* username = NULL;
+    const char* password = NULL;
+
+    // Parse command line arguments
+    int opt;
+    while ((opt = getopt(argc, argv, "s:p:")) != -1) {
+        switch (opt) {
+            case 's':
+                server_ip = optarg;
+                break;
+            case 'p':
+                server_port = atoi(optarg);
+                break;
+            default: /* '?' */
+                fprintf(stderr, "Usage: %s [-s server_ip] [-p server_port] COMMAND ...\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
     }
 
-    const char* server_ip = argv[1];
-    int server_port = atoi(argv[2]);
-    const char* command = argv[3];
-    const char* username = argv[4];
+    if (optind >= argc) {
+        fprintf(stderr, "Expected COMMAND after options\n");
+        exit(EXIT_FAILURE);
+    }
 
-    int sockfd;
-    struct sockaddr_in server_addr;
+    // Command should be the next argument after options
+    command = argv[optind++];
+    
+    if (optind >= argc) {
+        fprintf(stderr, "Expected username after COMMAND\n");
+        exit(EXIT_FAILURE);
+    }
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    // Username should be the next argument after COMMAND
+    username = argv[optind++];
+
+    // If command is REGISTER, expect -p and password
+    if (strcmp(command, "REGISTER") == 0) {
+        if (optind >= argc || strcmp(argv[optind], "-p") != 0) {
+            fprintf(stderr, "Expected -p password after username for REGISTER command\n");
+            exit(EXIT_FAILURE);
+        }
+        if (optind + 1 >= argc) {
+            fprintf(stderr, "Expected password after -p for REGISTER command\n");
+            exit(EXIT_FAILURE);
+        }
+        password = argv[optind + 1];
+        optind += 2; // Skip -p and password arguments
+    }
+
+    // Create socket
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("Socket creation failed");
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
+    // Setup server address
+    struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(server_port);
     server_addr.sin_addr.s_addr = inet_addr(server_ip);
 
+    // Connect to server
     if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         perror("Connection to the server failed");
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     if (strcmp(command, "REGISTER") == 0) {
@@ -156,6 +211,7 @@ int main(int argc, char *argv[]) {
         printf("Invalid command\n");
     }
 
+    //close socket
     close(sockfd);
     return 0;
 }
