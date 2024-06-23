@@ -128,6 +128,16 @@ void delete_chat(int sockfd, const char* username, const char* channel, int id) 
     printf("%s\n", buffer);
 }
 
+void edit_profile_self(int sockfd, const char* username, const char* new_username, const char* new_password) {
+    char buffer[BUFFER_SIZE];
+    snprintf(buffer, sizeof(buffer), "EDIT PROFILE SELF %s %s %s", username, new_username, new_password);
+
+    send(sockfd, buffer, strlen(buffer), 0);
+    recv(sockfd, buffer, sizeof(buffer), 0);
+
+    printf("%s\n", buffer);
+}
+
 int main(int argc, char *argv[]) {
     const char* server_ip = "127.0.0.1"; // Nilai default IP server
     int server_port = 8080; // Nilai default port server
@@ -232,6 +242,10 @@ int main(int argc, char *argv[]) {
         const char* channel = argv[optind++];
         int id = atoi(argv[optind++]);
         delete_chat(sockfd, username, channel, id);
+    } else if (strcmp(command, "EDIT PROFILE SELF") == 0) {
+        const char* new_username = argv[5];
+        const char* new_password = argv[6];
+        edit_profile_self(sockfd, username, new_username, new_password);
     } else {
         printf("Invalid command\n");
     }
