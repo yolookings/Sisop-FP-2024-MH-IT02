@@ -374,18 +374,6 @@ Dalam fungsi `main` terdapat hal berikut:
 3. Mengeksekusi perintah yang diberikan seperti, `REGISTER`, `LOGIN`, `JOIN`, `LIST CHANNEL`, `LIST ROOM`, `LIST USER`, `CHAT`, dan `EDIT PROFILE SELF` dengan memanggil fungsi yang sesuai
 4. Kemudian, yang terakhir adalah menutup socket setelah perintah selesai dijalankan
 
-implementasi kode :
-
-```c
-
-```
-
-saat menjalankan program :
-
-```sh
-
-```
-
 # server.c
 
 ## Overview
