@@ -55,6 +55,7 @@ Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam apli
 # discorit.c
 
 #### Header
+
 ```c
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,11 +66,12 @@ Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam apli
 
 #define BUFFER_SIZE 1024
 ```
+
 Bagian ini merupakan header file yang dibutuhkan, yaitu `stdio.h` untuk fungsi input/output dasar, `stdlib.h` untuk fungsi umum seperti exit, `string.h` untuk fungsi manipulasi string, `unistd.h` untuk fungsi POSIX seperti getopt dan close, `arpa/inet.h` untuk fungsi terkait jaringan seperti inet_addr. Selain itu, ada definisi `BUFFER_SIZE` sebesar 1024 byte
 
-
 #### Fungsi `register_user`
-```c 
+
+```c
 void register_user(int sockfd, const char* username, const char* password) {
     char salt[BCRYPT_HASHSIZE];
     char hashed[BCRYPT_HASHSIZE];
@@ -83,7 +85,7 @@ void register_user(int sockfd, const char* username, const char* password) {
 
     // Send message to server
     send(sockfd, buffer, strlen(buffer), 0);
-    
+
     // Receive response from server
     recv(sockfd, buffer, sizeof(buffer), 0);
 
@@ -97,20 +99,25 @@ void register_user(int sockfd, const char* username, const char* password) {
     }
 }
 ```
+
 Fungsi `register_user` melakukan registrasi pengguna dengan membuat salt dan hash password menggunakan bcrypt. Kemudian, mengirim pesan ke server dengan format `REGISTER username, hashed_password`. Dan yang terakhir, menerima dan mengecek respons dari server apakah registrasi berhasil atau gagal
 
 Contoh saat menjalankan kode:
+
 ```
 ./discorit REGISTER sisop -p sisop02
 ./discorit REGISTER sisop -p sisop02
 ```
+
 hasilnya:
+
 ```
 sisop berhasil register
 sisop sudah terdaftar
 ```
 
 #### Fungsi `login_user`
+
 ```c
 void login_user(int sockfd, const char* username, const char* password) {
     char line[256];
@@ -141,14 +148,16 @@ void login_user(int sockfd, const char* username, const char* password) {
             }
         }
     }
-    
+
     fclose(file);
     printf("Login gagal\n"); // Cetak jika username tidak ditemukan
 }
 ```
+
 Fungsi `login_user` melakukan login dengan membaca file `user.csv` untuk mendapatkan username, hashed password, dan role. Kemudian, mengecek apakah username yang diberikan ada dalam file. Setelah itu, memverifikasi password menggunakan bcrypt. Jika benar, maka akan mencetak pesan login berhasil dan role pengguna
 
 #### Fungsi `join_channel`
+
 ```c
 void join_channel(int sockfd, const char* username, const char* channel, const char* key) {
     char buffer[BUFFER_SIZE];
@@ -164,6 +173,7 @@ void join_channel(int sockfd, const char* username, const char* channel, const c
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `join_channel` mengirim permintaan untuk bergabung dengan channel tertentu ke server. Jika channel membutuhkan key, maka key tersebut disertakan dalam pesan
 
 implementasi kode :
@@ -179,6 +189,296 @@ saat menjalankan program :
 ```
 
 # server.c
+
+## Overview
+
+ini merupakan implementasi server untuk aplikasi chat berbasis command-line. Server ini dirancang untuk mendukung berbagai operasi seperti registrasi pengguna, manajemen channel, dan pengelolaan pesan. Berikut adalah panduan singkat untuk memahami struktur dan fungsi utama server ini.
+
+## Pustaka dan Definisi
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <bcrypt.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <time.h>
+
+```
+
+Pustaka dan konstanta penting diimpor dan didefinisikan di bagian ini karena mencakup semua library dari program server yang akan kita perlukan.
+
+## Struktur Data
+
+```c
+typedef struct {
+    int socket;
+    struct sockaddr_in address;
+    char logged_in_user[50];
+    char logged_in_role[10];
+    char logged_in_channel[50];
+    char logged_in_room[50];
+} client_info;
+
+client_info *clients[MAX_CLIENTS];
+pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+```
+
+`client_info` digunakan untuk menyimpan informasi klien yang terhubung.
+
+## Deklarasi Fungsi
+
+```c
+#define PORT 8080
+#define MAX_CLIENTS 10
+#define BUFFER_SIZE 10240
+#define SALT_SIZE 64
+#define USERS_FILE "/Users/mwlanaz/desktop/praktikum/praktikum-sisop/uji-fp/fp/DiscorIT/users.csv"
+#define CHANNELS_FILE "/Users/mwlanaz/desktop/praktikum/praktikum-sisop/uji-fp/fp/DiscorIT/channels.csv"
+
+
+void *handle_client(void *arg);
+void daemonize();
+
+void register_user(const char *username, const char *password, client_info *client);
+void login_user(const char *username, const char *password, client_info *client);
+
+//create
+void create_directory(const char *path, client_info *client);
+void create_channel(const char *username, const char *channel, const char *key, client_info *client);
+void create_room(const char *username, const char *channel, const char *room, client_info *client);
+
+//list
+void list_channels(client_info *client);
+void list_rooms(const char *channel, client_info *client);
+void list_users(const char *channel, client_info *client);
+
+// join and verify
+void join_channel(const char *username, const char *channel, client_info *client);
+void verify_key(const char *username, const char *channel, const char *key, client_info *client);
+void join_room(const char *channel, const char *room, client_info *client);
+//chat
+void send_chat(const char *username, const char *channel, const char *room, const char *message, client_info *client);
+void see_chat(const char *channel, const char *room, client_info *client);
+void edit_chat(const char *channel, const char *room, int id_chat, const char *new_text, client_info *client);
+// edit
+void edit_channel(const char *old_channel, const char *new_channel, client_info *client);
+void edit_room(const char *channel, const char *old_room, const char *new_room, client_info *client);
+void edit_profile_self(const char *username, const char *new_value, bool is_password, client_info *client);
+//delete
+void delete_chat(const char *channel, const char *room, int chat_id, client_info *client);
+void delete_directory(const char *path);
+void delete_channel(const char *channel, client_info *client);
+void delete_room(const char *channel, const char *room, client_info *client);
+void delete_all_rooms(const char *channel, client_info *client);
+// log
+void log_activity(const char *channel, const char *message);
+```
+
+Berbagai fungsi yang dideklarasikan untuk menangani koneksi klien dan operasi server.
+
+## Fungsi Utama
+
+```c
+int main() {
+    daemonize();
+
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    socklen_t addr_len = sizeof(address);
+    pthread_t tid;
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == 0) {
+        perror("Gagal membuat socket");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("Gagal bind");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(server_fd, 3) < 0) {
+        perror("Gagal listen");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server berjalan sebagai daemon pada port %d\n", PORT);
+
+    while (1) {
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addr_len)) < 0) {
+            perror("Gagal melakukan accept");
+            exit(EXIT_FAILURE);
+        }
+
+        pthread_t tid;
+        client_info *client = (client_info *)malloc(sizeof(client_info));
+        client->socket = new_socket;
+        client->address = address;
+        memset(client->logged_in_user, 0, sizeof(client->logged_in_user));
+        memset(client->logged_in_role, 0, sizeof(client->logged_in_role));
+        memset(client->logged_in_channel, 0, sizeof(client->logged_in_channel));
+        memset(client->logged_in_room, 0, sizeof(client->logged_in_room));
+
+        pthread_create(&tid, NULL, handle_client, (void *)client);
+    }
+
+    return 0;
+}
+
+```
+
+Fungsi utama untuk mengatur server sebagai daemon dan menangani koneksi masuk.
+
+## Fungsi daemonize
+
+```c
+void daemonize() {
+    pid_t pid, sid;
+
+    pid = fork();
+
+    if (pid < 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid > 0) {
+        exit(EXIT_SUCCESS);
+    }
+
+    umask(0);
+
+    sid = setsid();
+    if (sid < 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    if ((chdir("/")) < 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
+    int log_fd = open("/tmp/server.log", O_WRONLY | O_CREAT | O_APPEND, 0600);
+    if (log_fd < 0) {
+        exit(EXIT_FAILURE);
+    }
+    dup2(log_fd, STDOUT_FILENO);
+    dup2(log_fd, STDERR_FILENO);
+}
+```
+
+Mengubah server menjadi daemon, menutup file descriptors, dan mengalihkan log ke file log.
+
+## Handle Client Function
+
+```c
+void *handle_client(void *arg) {
+    client_info *cli = (client_info *)arg;
+    char buffer[BUFFER_SIZE];
+    int n;
+
+    while ((n = read(cli->socket, buffer, sizeof(buffer))) > 0) {
+        buffer[n] = '\0';
+        printf("Pesan dari client: %s\n", buffer);
+
+        char *token = strtok(buffer, " ");
+        if (token == NULL) {
+            char response[] = "Perintah tidak dikenali";
+            if (write(cli->socket, response, strlen(response)) < 0) {
+                perror("Gagal mengirim respons ke client");
+            }
+            continue;
+        }
+```
+
+Fungsi `handle_client` membaca pesan dari klien dan memproses perintah yang diterima.
+
+## Command List
+
+```sh
+sebagaimana yang tertera dalam file server.c , ada berbagia macam fungsi, dengan simpelnya seperti berikut:
+```
+
+- **REGISTER**: Mendaftarkan pengguna baru.
+- **LOGIN**: Masuk ke akun pengguna.
+- **CREATE**: Membuat channel atau room baru.
+- **LIST**: Menampilkan daftar channel, room, atau pengguna.
+- **JOIN**: Bergabung ke channel atau room.
+- **CHAT**: Mengirim pesan dalam room.
+
+## Operasi Lainnya
+
+```c
+send_chat(cli->logged_in_user, cli->logged_in_channel, cli->logged_in_room, message, cli);
+} else if (strcmp(token, "SEE") == 0) {
+    token = strtok(NULL, " ");
+    if (token == NULL || strcmp(token, "CHAT") != 0 || strlen(cli->logged_in_channel) == 0 || strlen(cli->logged_in_room) == 0) {
+        char response[] = "Format perintah SEE CHAT tidak valid atau anda belum tergabung dalam room";
+        if (write(cli->socket, response, strlen(response)) < 0) {
+            perror("Gagal mengirim respons ke client");
+        }
+        continue;
+    }
+```
+
+- **send_chat**: Mengirim pesan chat dari pengguna terdaftar.
+- **SEE**: Menampilkan chat dari channel dan room.
+- **EDIT**: Mengedit chat, channel, room, atau profil pengguna.
+- **DEL**: Menghapus chat, channel, atau room.
+
+## Log Aktivitas
+
+```c
+void log_activity(const char *channel, const char *message) {
+    char log_path[256];
+    snprintf(log_path, sizeof(log_path), "/home/mwlanaz/desktop/praktikum/praktikum-sisop/uji-fp/fp/DiscorIT/%s/admin/user.log", channel);
+
+    FILE *log_file = fopen(log_path, "a+");
+    if (!log_file) {
+        perror("Gagal membuka file user.log");
+        return;
+    }
+
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    char date[30];
+    strftime(date, sizeof(date), "%d/%m/%Y %H:%M:%S", t);
+
+    fprintf(log_file, "[%s] %s\n", date, message);
+    fclose(log_file);
+}
+```
+
+Fungsi `log_activity` untuk mencatat aktivitas ke file log di setiap channel.
+
+Fungsi ini menerima dua parameter: channel yang menunjukkan direktori channel untuk menyimpan log, dan message yang merupakan pesan yang akan dicatat dalam format log.
+Path file log di-generate menggunakan snprintf sesuai dengan channel yang diberikan.
+File log dibuka dengan mode "a+" untuk menambahkan (append) dan membaca (read) jika sudah ada.
+Waktu saat ini diambil menggunakan time() dan diubah menjadi format lokal menggunakan localtime() dan strftime() untuk format tanggal yang sesuai.
+Pesan dan tanggal dicatat ke dalam file log menggunakan fprintf.
+File log ditutup setelah selesai menulis.
+
+## Kesimpulan
+
+Dengan fitur-fitur di atas, Server memungkinkan pengguna untuk berinteraksi dengan sistem melalui berbagai perintah yang dapat dieksekusi secara aman dan efisien.
 
 # monitor.c
 
