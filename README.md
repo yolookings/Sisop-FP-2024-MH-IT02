@@ -206,6 +206,15 @@ Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang
 
 Contoh saat menjalankan kode:
 ```sh
+[sisop] JOIN sisopit02
+```
+hasilnya:
+```sh
+[sisop/sisopit02] 
+```
+
+Contoh saat menjalankan kode:
+```sh
 [sisop] LIST CHANNEL
 ```
 hasilnya:
