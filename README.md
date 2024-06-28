@@ -54,6 +54,62 @@ Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam apli
 
 ## discorit.c
 
+### Header
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include "bcrypt.h"
+
+#define BUFFER_SIZE 1024
+```
+Bagian ini merupakan header file yang dibutuhkan, yaitu `stdio.h` untuk fungsi input/output dasar, `stdlib.h` untuk fungsi umum seperti exit, `string.h` untuk fungsi manipulasi string, `unistd.h` untuk fungsi POSIX seperti getopt dan close, `arpa/inet.h` untuk fungsi terkait jaringan seperti inet_addr. Selain itu, ada definisi `BUFFER_SIZE` sebesar 1024 byte
+
+
+### Fungsi `register_user`
+```c 
+void register_user(int sockfd, const char* username, const char* password) {
+    char salt[BCRYPT_HASHSIZE];
+    char hashed[BCRYPT_HASHSIZE];
+    // Generate salt and hash the password
+    bcrypt_gensalt(12, salt);
+    bcrypt_hashpw(password, salt, hashed);
+
+    // Construct message to send to server
+    char buffer[BUFFER_SIZE];
+    snprintf(buffer, sizeof(buffer), "REGISTER %s %s", username, hashed);
+
+    // Send message to server
+    send(sockfd, buffer, strlen(buffer), 0);
+    
+    // Receive response from server
+    recv(sockfd, buffer, sizeof(buffer), 0);
+
+    // Check server response
+    if (strncmp(buffer, "REGISTER_SUCCESS", 16) == 0) {
+        printf("%s berhasil register\n", username);
+    } else if (strncmp(buffer, "REGISTER_FAILURE", 16) == 0) {
+        printf("%s sudah terdaftar\n", username);
+    } else {
+        printf("Server returned unexpected response: %s\n", buffer);
+    }
+}
+```
+Fungsi `register_user` melakukan registrasi pengguna dengan membuat salt dan hash password menggunakan bcrypt. Kemudian, mengirim pesan ke server dengan format `REGISTER username, hashed_password`. Dan yang terakhir, menerima dan mengecek respons dari server apakah registrasi berhasil atau gagal
+
+Contoh saat menjalankan kode:
+```
+./discorit REGISTER sisop -p sisop02
+./discorit REGISTER sisop -p sisop02
+```
+hasilnya:
+```
+sisop berhasil register
+sisop sudah terdaftar
+```
+
 implementasi kode :
 
 ```c
