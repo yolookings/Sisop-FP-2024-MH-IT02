@@ -189,6 +189,15 @@ void join_channel(int sockfd, const char* username, const char* channel, const c
 
 Fungsi `join_channel` mengirim permintaan untuk bergabung dengan channel tertentu ke server. Jika channel membutuhkan key, maka key tersebut disertakan dalam pesan
 
+Contoh saat menjalankan kode:
+```sh
+[sisop] JOIN sisopit02
+```
+hasilnya:
+```sh
+[sisop/sisopit02] 
+```
+
 #### Fungsi list_channels
 
 ```c
@@ -203,15 +212,6 @@ void list_channels(int sockfd, const char* username) {
 }
 ```
 Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
-
-Contoh saat menjalankan kode:
-```sh
-[sisop] JOIN sisopit02
-```
-hasilnya:
-```sh
-[sisop/sisopit02] 
-```
 
 Contoh saat menjalankan kode:
 ```sh
