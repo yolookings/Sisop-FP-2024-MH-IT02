@@ -154,6 +154,16 @@ void login_user(int sockfd, const char* username, const char* password) {
 ```
 Fungsi `login_user` melakukan login dengan membaca file `user.csv` untuk mendapatkan username, hashed password, dan role. Kemudian, mengecek apakah username yang diberikan ada dalam file. Setelah itu, memverifikasi password menggunakan bcrypt. Jika benar, maka akan mencetak pesan login berhasil dan role pengguna
 
+Contoh saat menjalankan kode:
+```sh
+./discorit LOGIN sisop -p sisop02
+```
+hasilnya:
+```sh
+sisop berhasil login
+[sisop] [sisop] 
+```
+
 #### Fungsi join_channel
 
 ```c
