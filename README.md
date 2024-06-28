@@ -211,18 +211,8 @@ void list_channels(int sockfd, const char* username) {
     printf("%s\n", buffer);
 }
 ```
-Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
 
-Contoh saat menjalankan kode:
-```sh
-[sisop] LIST CHANNEL
-```
-hasilnya:
-```sh
-[sisop] LIST CHANNEL
-Available channels:
- CHANNEL sisopit02
-```
+Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
 
 #### Fungsi list_rooms
 
@@ -755,8 +745,16 @@ void login() {
 - Menerima input username dan password dari pengguna.
 - Mengirimkan informasi login ke server dan membaca respon dari server.
 - Jika login gagal, program akan keluar.
-
-`receive_messages` :
+  
+saat program dijalankan:
+```sh
+Enter username: (user memasukkan username)
+Enter password: (user memasukkan password)
+LOGIN qurbancare -p qurban123
+qurbancare berhasil login
+```
+Jika login gagal, program akan keluar dan tidak ada output tambahan.
+# Fungsi `receive_messages` :
 
 ```c
 void *receive_messages(void *arg) {
@@ -849,16 +847,29 @@ int main() {
 saat menjalankan program :
 
 ```sh
-Enter username:
-Enter password:
-[Server Response: Welcome message or error]
-Enter channel name:
-Enter room name:
-[username] -channel [channel] -room [room]
+Enter username: (user memasukkan username)
+Enter password: (user memasukkan password)
+LOGIN qurbancare -p qurban123
+qurbancare berhasil login
+Enter channel name: (user memasukkan nama channel)
+Enter room name: (user memasukkan nama room)
+[qurbancare] -channel care -room urban
 ~isi chat~
 sebelumnya
-
+[05/06/2024 23:22:12][3][qurbancare] “hallo”
 ```
+Saat menerima pesan dari server:
+```sh
+[05/06/2024 23:22:12][3][qurbancare] “hallo”
+```
+Saat pengguna mengetik "EXIT":
+```sh
+[qurbancare/care/urban] EXIT
+[qurbancare] EXIT
+```
+# Kesimpulan 
+Kesimpulan
+Program `monitor` menampilkan berbagai output tergantung pada langkah-langkah yang diambil oleh pengguna dan respons dari server. Output utama meliputi pesan sukses atau gagal pada tahap pembuatan socket, koneksi ke server, autentikasi pengguna, serta pesan yang diterima dari server selama program berjalan. Dengan menggunakan socket untuk komunikasi dan thread untuk menangani penerimaan pesan asinkron, program ini memastikan bahwa pengguna dapat memonitor chat dengan lancar dan responsif. Penggunaan autentikasi memastikan bahwa hanya pengguna yang sah yang dapat mengakses dan memonitor chat.
 
 ## Dokumentasi
 
