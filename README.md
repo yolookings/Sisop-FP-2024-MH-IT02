@@ -18,7 +18,7 @@
 - [monitor](#monitorc)
 - [Dokumentasi](#dokumentasi)
 
-## inti soal
+# inti soal
 
 Oke, jadi soal ini minta kita bikin aplikasi chat client-server yang lengkap banget. Berikut poin-poin penting yang harus diimplementasikan:
 
@@ -48,11 +48,11 @@ Oke, jadi soal ini minta kita bikin aplikasi chat client-server yang lengkap ban
 - Ada file users.csv, channels.csv, dan beberapa file log dan chat di masing-masing channel dan room.
   Intinya, kita bikin aplikasi chat yang lengkap dan aman, dengan banyak fitur buat user dan admin.
 
-## Penjelasan Kode
+# Penjelasan Kode
 
 Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam aplikasi ini: discorit.c (client), server.c, dan monitor.c.
 
-## discorit.c
+# discorit.c
 
 #### Header
 ```c
@@ -178,21 +178,9 @@ saat menjalankan program :
 
 ```
 
-## server.c
+# server.c
 
-implementasi kode :
-
-```c
-
-```
-
-saat menjalankan program :
-
-```sh
-
-```
-
-## monitor.c
+# monitor.c
 
 implementasi kode :
 
