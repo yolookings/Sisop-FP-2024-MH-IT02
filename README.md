@@ -69,7 +69,7 @@ Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam apli
 
 Bagian ini merupakan header file yang dibutuhkan, yaitu `stdio.h` untuk fungsi input/output dasar, `stdlib.h` untuk fungsi umum seperti exit, `string.h` untuk fungsi manipulasi string, `unistd.h` untuk fungsi POSIX seperti getopt dan close, `arpa/inet.h` untuk fungsi terkait jaringan seperti inet_addr. Selain itu, ada definisi `BUFFER_SIZE` sebesar 1024 byte
 
-#### Fungsi `register_user`
+#### Fungsi register_user
 
 ```c
 void register_user(int sockfd, const char* username, const char* password) {
@@ -115,7 +115,7 @@ sisop berhasil register
 sisop sudah terdaftar
 ```
 
-#### Fungsi `login_user`
+#### Fungsi login_user
 
 ```c
 void login_user(int sockfd, const char* username, const char* password) {
@@ -154,7 +154,7 @@ void login_user(int sockfd, const char* username, const char* password) {
 ```
 Fungsi `login_user` melakukan login dengan membaca file `user.csv` untuk mendapatkan username, hashed password, dan role. Kemudian, mengecek apakah username yang diberikan ada dalam file. Setelah itu, memverifikasi password menggunakan bcrypt. Jika benar, maka akan mencetak pesan login berhasil dan role pengguna
 
-#### Fungsi `join_channel`
+#### Fungsi join_channel
 
 ```c
 void join_channel(int sockfd, const char* username, const char* channel, const char* key) {
@@ -173,7 +173,7 @@ void join_channel(int sockfd, const char* username, const char* channel, const c
 ```
 Fungsi `join_channel` mengirim permintaan untuk bergabung dengan channel tertentu ke server. Jika channel membutuhkan key, maka key tersebut disertakan dalam pesan
 
-#### Fungsi `list_channels`
+#### Fungsi list_channels
 
 ```c
 void list_channels(int sockfd, const char* username) {
@@ -188,7 +188,7 @@ void list_channels(int sockfd, const char* username) {
 ```
 Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
 
-#### Fungsi `list_rooms`
+#### Fungsi list_rooms
 
 ```c
 void list_rooms(int sockfd, const char* username, const char* channel) {
@@ -203,7 +203,7 @@ void list_rooms(int sockfd, const char* username, const char* channel) {
 ```
 Fungsi `list_rooms` mengirimkan permintaan untuk mendapatkan daftar room dalam channel tertentu ke server
 
-#### Fungsi `list_users`
+#### Fungsi list_users
 
 ```c
 void list_users(int sockfd, const char* username, const char* channel) {
@@ -218,7 +218,7 @@ void list_users(int sockfd, const char* username, const char* channel) {
 ```
 Fungsi `list_users` mengirim permintaan untuk mendapatkan daftar pengguna dalam channel tertentu ke server
 
-#### Fungsi `chat`
+#### Fungsi chat
 
 ```c
 void chat(int sockfd, const char* username, const char* channel, const char* message) {
@@ -233,7 +233,7 @@ void chat(int sockfd, const char* username, const char* channel, const char* mes
 ```
 Fungsi `chat` mengirim pesan ke channel tertentu ke server
 
-#### Fungsi `edit_profile_self`
+#### Fungsi edit_profile_self
 
 ```c
 void edit_profile_self(int sockfd, const char* username, const char* new_username, const char* new_password) {
