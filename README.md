@@ -670,22 +670,152 @@ Dengan fitur-fitur di atas, Server memungkinkan pengguna untuk berinteraksi deng
 
 implementasi kode :
 
+# Struct Definition
 ```c
+typedef struct {
+    char username[MAX_USERNAME];
+    char channel[MAX_CHANNEL];
+    char room[MAX_ROOM];
+} User;
 
 ```
+`User`: Struktur yang menyimpan informasi pengguna seperti username, channel, dan room.
+# Global Variables
 
+```c
+int sock = 0;
+User current_user;
+```
+`sock`: Menyimpan deskriptor socket yang digunakan untuk komunikasi dengan server.
+`current_user`: Menyimpan informasi pengguna saat ini.
+
+# Function: `login`
+```c
+void login() {
+    char password[MAX_PASSWORD];
+    printf("Enter username: ");
+    scanf("%s", current_user.username);
+    printf("Enter password: ");
+    scanf("%s", password);
+
+    char message[MAX_MESSAGE];
+    snprintf(message, sizeof(message), "LOGIN %s -p %s", current_user.username, password);
+    send(sock, message, strlen(message), 0);
+
+    char response[MAX_MESSAGE] = {0};
+    read(sock, response, MAX_MESSAGE);
+    printf("%s\n", response);
+
+    if (strstr(response, "berhasil login") == NULL) {
+        exit(1);
+    }
+}
+```
+- Fungsi ini menangani proses login pengguna.
+- Menerima input username dan password dari pengguna.
+- Mengirimkan informasi login ke server dan membaca respon dari server.
+- Jika login gagal, program akan keluar.
+
+# Function: `receive_messages`
+```c
+void *receive_messages(void *arg) {
+    char buffer[MAX_MESSAGE] = {0};
+    while (1) {
+        int valread = read(sock, buffer, MAX_MESSAGE);
+        if (valread > 0) {
+            printf("%s\n", buffer);
+        }
+        memset(buffer, 0, sizeof(buffer));
+    }
+    return NULL;
+}
+```
+- Fungsi ini berjalan di thread terpisah untuk menerima pesan dari server secara kontinu.
+- Membaca pesan dari server dan mencetaknya ke layar.
+
+# Function: `main`
+```c
+int main() {
+    struct sockaddr_in serv_addr;
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Socket creation error \n");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(SERVER_PORT);
+
+    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+        printf("\nInvalid address/ Address not supported \n");
+        return -1;
+    }
+
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+
+    login();
+
+    printf("Enter channel name: ");
+    scanf("%s", current_user.channel);
+    printf("Enter room name: ");
+    scanf("%s", current_user.room);
+
+    char monitor_request[MAX_MESSAGE];
+    snprintf(monitor_request, sizeof(monitor_request), "MONITOR %s -channel %s -room %s", 
+             current_user.username, current_user.channel, current_user.room);
+    send(sock, monitor_request, strlen(monitor_request), 0);
+
+    pthread_t receive_thread;
+    if (pthread_create(&receive_thread, NULL, receive_messages, NULL) != 0) {
+        perror("Failed to create receive thread");
+        return -1;
+    }
+
+    printf("[%s] -channel %s -room %s\n", current_user.username, current_user.channel, current_user.room);
+    printf("~isi chat~\n");
+    printf("sebelumnya\n");
+
+    char input[MAX_MESSAGE];
+    while (1) {
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;
+
+        if (strcmp(input, "EXIT") == 0) {
+            printf("[%s/%s/%s] EXIT\n", current_user.username, current_user.channel, current_user.room);
+            printf("[%s] EXIT\n", current_user.username);
+            break;
+        }
+    }
+
+    close(sock);
+    return 0;
+}
+```
+- Socket Creation and Connection: Membuat socket dan menghubungkan ke server.
+- Login: Memanggil fungsi `login` untuk autentikasi pengguna.
+- Channel and Room Selection: Meminta pengguna memasukkan nama channel dan room.
+- Send Monitor Request: Mengirimkan permintaan monitor ke server.
+- Receive Messages Thread: Membuat thread untuk menerima pesan dari server secara asinkron.
+- Message Loop: Loop utama untuk membaca input pengguna dan mengirimkan pesan. Keluar jika pengguna mengetik "EXIT".
+- Close Socket: Menutup socket saat selesai.
+  
 saat menjalankan program :
 
 ```sh
+Enter username: 
+Enter password: 
+[Server Response: Welcome message or error]
+Enter channel name: 
+Enter room name: 
+[username] -channel [channel] -room [room]
+~isi chat~
+sebelumnya
 
 ```
 
 ## Dokumentasi
 
 Dokumentasi berikut berisi gambar dari contoh program yang telah dijalankan:
-- Dokumentasi saat melakukan register
-  ![dokum_fp1](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/ce576563-195e-4d9e-af0d-2c759b7d5825)
-- Dokumentasi saat melakukan login
-  ![dokum_fp2](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/d1fdd597-1b09-4d40-99af-3381f8db1ad1)
-
-
