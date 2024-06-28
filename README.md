@@ -685,3 +685,9 @@ saat menjalankan program :
 ## Dokumentasi
 
 Dokumentasi berikut berisi gambar dari contoh program yang telah dijalankan:
+- Dokumentasi saat melakukan register
+  ![dokum_fp1](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/ce576563-195e-4d9e-af0d-2c759b7d5825)
+- Dokumentasi saat melakukan login
+  ![dokum_fp2](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/d1fdd597-1b09-4d40-99af-3381f8db1ad1)
+
+
