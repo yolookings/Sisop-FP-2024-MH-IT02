@@ -212,7 +212,6 @@ hasilnya:
 ```sh
 [sisop] LIST CHANNEL
 Available channels:
- CHANNEL syela
  CHANNEL sisopit02
 ```
 
