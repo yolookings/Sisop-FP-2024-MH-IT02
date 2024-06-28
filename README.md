@@ -844,3 +844,12 @@ sebelumnya
 ## Dokumentasi
 
 Dokumentasi berikut berisi gambar dari contoh program yang telah dijalankan:
+- Berikut adalah dokumentasi saat melakukan registrasi
+  ![dokum_fp1](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/2b4cb921-ab54-449f-b15c-f13e53d2e6a6)
+- Berikut adalah dokumentasi saat melakukan login
+  ![dokum_fp2](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/fdd3ba84-e1fb-47fd-b9de-e6e307751f42)
+- Berikut adalah dokumentasi yang memperlihatkan list channel
+  ![dokum_fp4](https://github.com/yolookings/Sisop-FP-2024-MH-IT02/assets/151950309/bb2c81d7-fc01-43f8-8343-0476516143d7)
+
+
+
