@@ -202,8 +202,19 @@ void list_channels(int sockfd, const char* username) {
     printf("%s\n", buffer);
 }
 ```
-
 Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
+
+Contoh saat menjalankan kode:
+```sh
+[sisop] LIST CHANNEL
+```
+hasilnya:
+```sh
+[sisop] LIST CHANNEL
+Available channels:
+ CHANNEL syela
+ CHANNEL sisopit02
+```
 
 #### Fungsi list_rooms
 
