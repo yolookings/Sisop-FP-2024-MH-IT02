@@ -68,7 +68,7 @@ Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam apli
 Bagian ini merupakan header file yang dibutuhkan, yaitu `stdio.h` untuk fungsi input/output dasar, `stdlib.h` untuk fungsi umum seperti exit, `string.h` untuk fungsi manipulasi string, `unistd.h` untuk fungsi POSIX seperti getopt dan close, `arpa/inet.h` untuk fungsi terkait jaringan seperti inet_addr. Selain itu, ada definisi `BUFFER_SIZE` sebesar 1024 byte
 
 
-### Fungsi `register_user`
+#### Fungsi `register_user`
 ```c 
 void register_user(int sockfd, const char* username, const char* password) {
     char salt[BCRYPT_HASHSIZE];
