@@ -54,7 +54,7 @@ Di bawah ini adalah penjelasan singkat untuk masing-masing file utama dalam apli
 
 ## discorit.c
 
-### Header
+#### Header
 ```c
 #include <stdio.h>
 #include <stdlib.h>
