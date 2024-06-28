@@ -217,6 +217,18 @@ void list_channels(int sockfd, const char* username) {
 
 Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
 
+Contoh saat menjalankan kode:
+```sh
+[sisop] LIST CHANNEL
+```
+hasilnya:
+```sh
+[sisop] LIST CHANNEL
+Available channels:
+ CHANNEL syela
+ CHANNEL sisopit02
+```
+
 #### Fungsi list_rooms
 
 ```c
@@ -232,6 +244,17 @@ void list_rooms(int sockfd, const char* username, const char* channel) {
 ```
 
 Fungsi `list_rooms` mengirimkan permintaan untuk mendapatkan daftar room dalam channel tertentu ke server
+
+Contoh saat menjalankan kode:
+```sh
+[sisop/sisopit02] LIST ROOM
+```
+hasilnya:
+```sh
+[sisop/sisopit02] LIST ROOM
+Available rooms:
+ ROOM fpsisop
+```
 
 #### Fungsi list_users
 
