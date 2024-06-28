@@ -99,6 +99,7 @@ void register_user(int sockfd, const char* username, const char* password) {
     }
 }
 ```
+
 Fungsi `register_user` melakukan registrasi pengguna dengan membuat salt dan hash password menggunakan bcrypt. Kemudian, mengirim pesan ke server dengan format `REGISTER username, hashed_password`. Dan yang terakhir, menerima dan mengecek respons dari server apakah registrasi berhasil atau gagal
 
 Contoh saat menjalankan kode:
@@ -152,16 +153,20 @@ void login_user(int sockfd, const char* username, const char* password) {
     printf("Login gagal\n"); // Cetak jika username tidak ditemukan
 }
 ```
+
 Fungsi `login_user` melakukan login dengan membaca file `user.csv` untuk mendapatkan username, hashed password, dan role. Kemudian, mengecek apakah username yang diberikan ada dalam file. Setelah itu, memverifikasi password menggunakan bcrypt. Jika benar, maka akan mencetak pesan login berhasil dan role pengguna
 
 Contoh saat menjalankan kode:
+
 ```sh
 ./discorit LOGIN sisop -p sisop02
 ```
+
 hasilnya:
+
 ```sh
 sisop berhasil login
-[sisop] [sisop] 
+[sisop] [sisop]
 ```
 
 #### Fungsi join_channel
@@ -181,6 +186,7 @@ void join_channel(int sockfd, const char* username, const char* channel, const c
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `join_channel` mengirim permintaan untuk bergabung dengan channel tertentu ke server. Jika channel membutuhkan key, maka key tersebut disertakan dalam pesan
 
 #### Fungsi list_channels
@@ -196,6 +202,7 @@ void list_channels(int sockfd, const char* username) {
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `list_channels` mengirim permintaan untuk mendapatkan daftar channel yang tersedia ke server
 
 #### Fungsi list_rooms
@@ -211,6 +218,7 @@ void list_rooms(int sockfd, const char* username, const char* channel) {
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `list_rooms` mengirimkan permintaan untuk mendapatkan daftar room dalam channel tertentu ke server
 
 #### Fungsi list_users
@@ -226,6 +234,7 @@ void list_users(int sockfd, const char* username, const char* channel) {
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `list_users` mengirim permintaan untuk mendapatkan daftar pengguna dalam channel tertentu ke server
 
 #### Fungsi chat
@@ -241,6 +250,7 @@ void chat(int sockfd, const char* username, const char* channel, const char* mes
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `chat` mengirim pesan ke channel tertentu ke server
 
 #### Fungsi edit_profile_self
@@ -256,6 +266,7 @@ void edit_profile_self(int sockfd, const char* username, const char* new_usernam
     printf("%s\n", buffer);
 }
 ```
+
 Fungsi `edit_profile_self` mengirim permintaan untuk mengedit profil pengguna ke server.
 
 #### Main
@@ -291,7 +302,7 @@ int main(int argc, char *argv[]) {
 
     // Command should be the next argument after options
     command = argv[optind++];
-    
+
     if (optind >= argc) {
         fprintf(stderr, "Expected username after COMMAND\n");
         exit(EXIT_FAILURE);
@@ -368,7 +379,9 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ```
+
 Dalam fungsi `main` terdapat hal berikut:
+
 1. Mengambil argumen dari command line untuk mendapatkan IP server, port server, dan perintah apa yang ingin dijalankan
 2. Membuat socket dan kemudian menghubungkannya ke server
 3. Mengeksekusi perintah yang diberikan seperti, `REGISTER`, `LOGIN`, `JOIN`, `LIST CHANNEL`, `LIST ROOM`, `LIST USER`, `CHAT`, dan `EDIT PROFILE SELF` dengan memanggil fungsi yang sesuai
@@ -670,7 +683,8 @@ Dengan fitur-fitur di atas, Server memungkinkan pengguna untuk berinteraksi deng
 
 implementasi kode :
 
-# Struct Definition
+## Struct Definition
+
 ```c
 typedef struct {
     char username[MAX_USERNAME];
@@ -679,17 +693,23 @@ typedef struct {
 } User;
 
 ```
+
 `User`: Struktur yang menyimpan informasi pengguna seperti username, channel, dan room.
-# Global Variables
+
+## Global Variables
 
 ```c
 int sock = 0;
 User current_user;
 ```
+
 `sock`: Menyimpan deskriptor socket yang digunakan untuk komunikasi dengan server.
 `current_user`: Menyimpan informasi pengguna saat ini.
 
-# Function: `login`
+## Function:
+
+`login` :
+
 ```c
 void login() {
     char password[MAX_PASSWORD];
@@ -711,12 +731,14 @@ void login() {
     }
 }
 ```
+
 - Fungsi ini menangani proses login pengguna.
 - Menerima input username dan password dari pengguna.
 - Mengirimkan informasi login ke server dan membaca respon dari server.
 - Jika login gagal, program akan keluar.
 
-# Function: `receive_messages`
+`receive_messages` :
+
 ```c
 void *receive_messages(void *arg) {
     char buffer[MAX_MESSAGE] = {0};
@@ -730,10 +752,12 @@ void *receive_messages(void *arg) {
     return NULL;
 }
 ```
+
 - Fungsi ini berjalan di thread terpisah untuk menerima pesan dari server secara kontinu.
 - Membaca pesan dari server dan mencetaknya ke layar.
 
-# Function: `main`
+`main` :
+
 ```c
 int main() {
     struct sockaddr_in serv_addr;
@@ -764,7 +788,7 @@ int main() {
     scanf("%s", current_user.room);
 
     char monitor_request[MAX_MESSAGE];
-    snprintf(monitor_request, sizeof(monitor_request), "MONITOR %s -channel %s -room %s", 
+    snprintf(monitor_request, sizeof(monitor_request), "MONITOR %s -channel %s -room %s",
              current_user.username, current_user.channel, current_user.room);
     send(sock, monitor_request, strlen(monitor_request), 0);
 
@@ -794,6 +818,7 @@ int main() {
     return 0;
 }
 ```
+
 - Socket Creation and Connection: Membuat socket dan menghubungkan ke server.
 - Login: Memanggil fungsi `login` untuk autentikasi pengguna.
 - Channel and Room Selection: Meminta pengguna memasukkan nama channel dan room.
@@ -801,15 +826,15 @@ int main() {
 - Receive Messages Thread: Membuat thread untuk menerima pesan dari server secara asinkron.
 - Message Loop: Loop utama untuk membaca input pengguna dan mengirimkan pesan. Keluar jika pengguna mengetik "EXIT".
 - Close Socket: Menutup socket saat selesai.
-  
+
 saat menjalankan program :
 
 ```sh
-Enter username: 
-Enter password: 
+Enter username:
+Enter password:
 [Server Response: Welcome message or error]
-Enter channel name: 
-Enter room name: 
+Enter channel name:
+Enter room name:
 [username] -channel [channel] -room [room]
 ~isi chat~
 sebelumnya
