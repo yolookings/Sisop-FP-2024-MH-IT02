@@ -110,6 +110,62 @@ sisop berhasil register
 sisop sudah terdaftar
 ```
 
+#### Fungsi `login_user`
+```c
+void login_user(int sockfd, const char* username, const char* password) {
+    char line[256];
+    char stored_username[50];
+    char stored_password[BCRYPT_HASHSIZE];
+    char role[10];
+
+    FILE *file = fopen("user.csv", "r");
+    if (file == NULL) {
+        perror("File users.csv tidak dapat dibuka");
+        exit(EXIT_FAILURE);
+    }
+
+    while (fgets(line, sizeof(line), file)) {
+        sscanf(line, "%[^,],%[^,],%s", stored_username, stored_password, role);
+
+        if (strcmp(stored_username, username) == 0) {
+            if (bcrypt_checkpw(password, stored_password) == 0) {
+                printf("%s berhasil login\n", username);
+                printf("[%s]\n", username); // Cetak role setelah login berhasil
+                fclose(file);
+                return;
+            }
+            else {
+                fclose(file);
+                printf("Login gagal\n");
+                return;
+            }
+        }
+    }
+    
+    fclose(file);
+    printf("Login gagal\n"); // Cetak jika username tidak ditemukan
+}
+```
+Fungsi `login_user` melakukan login dengan membaca file `user.csv` untuk mendapatkan username, hashed password, dan role. Kemudian, mengecek apakah username yang diberikan ada dalam file. Setelah itu, memverifikasi password menggunakan bcrypt. Jika benar, maka akan mencetak pesan login berhasil dan role pengguna
+
+#### Fungsi `join_channel`
+```c
+void join_channel(int sockfd, const char* username, const char* channel, const char* key) {
+    char buffer[BUFFER_SIZE];
+    if (key != NULL) {
+        snprintf(buffer, sizeof(buffer), "JOIN %s %s %s", username, channel, key);
+    } else {
+        snprintf(buffer, sizeof(buffer), "JOIN %s %s", username, channel);
+    }
+
+    send(sockfd, buffer, strlen(buffer), 0);
+    recv(sockfd, buffer, sizeof(buffer), 0);
+
+    printf("%s\n", buffer);
+}
+```
+Fungsi `join_channel` mengirim permintaan untuk bergabung dengan channel tertentu ke server. Jika channel membutuhkan key, maka key tersebut disertakan dalam pesan
+
 implementasi kode :
 
 ```c
